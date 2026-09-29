@@ -2,7 +2,23 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-NDK="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-$HOME/Android/Sdk/ndk/27.1.12297006}}"
+
+resolve_ndk() {
+    local candidate
+    for candidate in "${ANDROID_NDK_HOME:-}" "${ANDROID_NDK_ROOT:-}"; do
+        if [[ -n "$candidate" && -d "$candidate" ]]; then
+            echo "$candidate"
+            return
+        fi
+    done
+    for candidate in "${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}/ndk"/* "$HOME/Android/Sdk/ndk"/*; do
+        if [[ -d "$candidate" ]]; then
+            echo "$candidate"
+        fi
+    done | sort -V | tail -n 1
+}
+
+NDK="$(resolve_ndk)"
 TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
 CC="$TOOLCHAIN/bin/aarch64-linux-android21-clang"
 LD="$TOOLCHAIN/bin/ld.lld"
