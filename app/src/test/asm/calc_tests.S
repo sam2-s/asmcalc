@@ -340,19 +340,18 @@ run_case:
     mov x20, x1
     mov x21, x2
     mov x22, x3
-    adrp x0, test_state
-    add x0, x0, :lo12:test_state
+    adrp x23, test_state
+    add x23, x23, :lo12:test_state
+    mov x0, x23
     bl calc_reset
-    mov x0, xzr
+    mov x24, xzr
 rc_key_loop:
-    cmp x0, x21
+    cmp x24, x21
     b.ge rc_keys_done
-    ldrb w1, [x20, x0]
-    adrp x2, test_state
-    add x2, x2, :lo12:test_state
-    mov x0, x2
+    ldrb w1, [x20, x24]
+    mov x0, x23
     bl calc_key
-    add x0, x0, #1
+    add x24, x24, #1
     b rc_key_loop
 rc_keys_done:
     adrp x0, test_state
