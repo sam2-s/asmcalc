@@ -48,6 +48,19 @@ sf_all_passed:
     .asciz "all tests passed\n"
 
 .section .text
+.global mark
+.type mark, %function
+mark:
+    sub sp, sp, #16
+    strb w0, [sp]
+    mov x0, #1
+    mov x1, sp
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    add sp, sp, #16
+    ret
+
 .global print
 .type print, %function
 print:
@@ -279,6 +292,8 @@ summary_ok:
 framework_selftest:
     stp x29, x30, [sp, #-48]!
     mov x29, sp
+    mov w0, #'a'
+    bl mark
     adrp x0, sf_a
     add x0, x0, :lo12:sf_a
     adrp x1, sf_a
@@ -315,6 +330,8 @@ framework_selftest:
     adrp x0, sf_harness_ok
     add x0, x0, :lo12:sf_harness_ok
     bl report_pass
+    mov w0, #'b'
+    bl mark
     ldp x29, x30, [sp], #48
     ret
 fs_fail:
@@ -340,6 +357,8 @@ run_case:
     mov x20, x1
     mov x21, x2
     mov x22, x3
+    mov w0, #'r'
+    bl mark
     adrp x23, test_state
     add x23, x23, :lo12:test_state
     mov x0, x23
@@ -354,16 +373,21 @@ rc_key_loop:
     add x24, x24, #1
     b rc_key_loop
 rc_keys_done:
-    adrp x0, test_state
-    add x0, x0, :lo12:test_state
+    mov w0, #'k'
+    bl mark
+    mov x0, x23
     adrp x1, test_out
     add x1, x1, :lo12:test_out
     bl calc_format
+    mov w0, #'f'
+    bl mark
     mov x0, x19
     adrp x1, test_out
     add x1, x1, :lo12:test_out
     mov x2, x22
     bl check
+    mov w0, #'c'
+    bl mark
     ldp x23, x24, [sp, #48]
     ldp x21, x22, [sp, #32]
     ldp x19, x20, [sp, #16]
@@ -387,15 +411,21 @@ table_next:
     ldr x20, [x0, #8]
     ldr x21, [x0, #16]
     ldr x22, [x0, #24]
+    mov w0, #'t'
+    bl mark
     bl run_case
     add x0, x0, #32
     ldr x1, [x0, #16]
     cbnz x1, table_next
 table_done:
+    mov w0, #'T'
+    bl mark
     bl print_summary
     adrp x0, failed_cases
     add x0, x0, :lo12:failed_cases
     ldr x0, [x0]
+    mov w0, #'D'
+    bl mark
     ldp x21, x22, [sp, #32]
     ldp x19, x20, [sp, #16]
     ldp x29, x30, [sp], #48
