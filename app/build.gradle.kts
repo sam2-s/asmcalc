@@ -22,7 +22,13 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments += "-DANDROID_STL=none"
+                arguments += listOf(
+                    "-DANDROID_STL=none",
+                    // The machine wide ~/.cargo/config.toml forces -static,
+                    // which is right for a binary and wrong for a cdylib, so
+                    // the project supplies its own rustflags.
+                    "-DASM_CALC_RUSTFLAGS=-C link-arg=-fuse-ld=lld",
+                )
             }
         }
     }
