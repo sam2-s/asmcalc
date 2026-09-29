@@ -7,5 +7,18 @@
 pub mod engine;
 pub mod expr;
 pub mod fixed;
+#[cfg(target_os = "android")]
+pub mod jni;
+
+// Link the AArch64 assembly kernel into the cdylib.
+//
+// `cc` emits a static library, and cargo places native libraries *after* its
+// own rlibs on the link line. Nothing in the Rust rlibs references the kernel
+// directly, so the linker is free to discard the archive entirely and the
+// assembly never reaches the .so. Forcing the dependency here makes the kernel
+// part of the crate graph, which both fixes the ordering and documents the
+// relationship: the Rust feature layer sits on top of the assembly kernel.
+#[link(name = "asmcalc_kernel", kind = "static")]
+extern "C" {}
 pub mod kernel;
 pub mod kernel_engine;
