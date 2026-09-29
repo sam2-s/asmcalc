@@ -27,6 +27,8 @@ fi
 
 # RUSTFLAGS is set to a single space so it overrides the machine wide
 # ~/.cargo/config.toml, which forces -static and would break the cdylib.
+# A cold checkout has no crate cache, so fetch once and stay offline after that.
+cargo fetch --quiet
 RUSTFLAGS=" " cargo test --offline --target "$TARGET" --no-run
 
 if ! command -v "$QEMU" >/dev/null 2>&1 && [[ ! -x "$QEMU" ]]; then

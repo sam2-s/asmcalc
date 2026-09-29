@@ -30,6 +30,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-user-static
 
+      - name: Fetch dependencies
+        run: cargo fetch --manifest-path rust/Cargo.toml
+
       - name: Native Rust tests
         run: cargo test --offline --manifest-path rust/Cargo.toml
 
