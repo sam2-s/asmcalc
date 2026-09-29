@@ -160,7 +160,7 @@ fn exact_arithmetic_basics() {
     assert!(Exact::from_u64(1).div(&Exact::zero()).is_none());
     assert_eq!(Exact::from_u64(2).powi(-2).unwrap().format(4), "0.25");
     assert_eq!(Exact::from_i64(-7).abs().format(0), "7");
-    assert_eq!(Exact::zero().negate().is_negative(), false, "no negative zero");
+    assert!(!Exact::zero().negate().is_negative(), "no negative zero");
 }
 
 #[test]

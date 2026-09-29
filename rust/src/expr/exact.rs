@@ -136,7 +136,7 @@ impl Parser {
 
         match token {
             Token::Number(value) => {
-                Exact::from_f64(value).ok_or_else(|| MathError::Overflow)
+                Exact::from_f64(value).ok_or(MathError::Overflow)
             }
             Token::LParen => {
                 let value = self.expression()?;

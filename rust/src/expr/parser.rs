@@ -73,7 +73,7 @@ pub fn constant(name: &str) -> Option<Number> {
         "e" | "E" => std::f64::consts::E,
         "tau" => std::f64::consts::TAU,
         // The golden ratio has no standard library constant.
-        "phi" => 1.618_033_988_749_894_848_2,
+        "phi" => 1.618_033_988_749_895,
         _ => return None,
     })
 }
@@ -195,7 +195,7 @@ impl Parser {
                 if right == 0.0 {
                     return Err(MathError::DivisionByZero);
                 }
-                value = value / right;
+                value /= right;
             } else if self.eat(&Token::Percent) {
                 // `x % y` is the remainder, matching the pocket calculator pad.
                 let right = self.unary()?;

@@ -1,0 +1,40 @@
+name: rust-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: rust feature layer
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-musl
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Install the NDK and qemu
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "ndk;27.1.12297006"
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+
+      - name: Native Rust tests
+        run: cargo test --offline --manifest-path rust/Cargo.toml
+
+      - name: FFI parity against the AArch64 kernel
+        run: ./rusttest.sh
+
+      - name: Clippy
+        run: cargo clippy --offline --manifest-path rust/Cargo.toml --all-targets -- -D warnings

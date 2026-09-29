@@ -26,6 +26,8 @@ jobs:
         with:
           packages: platform-tools
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Assemble
         run: |
           yes | sdkmanager --licenses > /dev/null || true
