@@ -4,5 +4,6 @@
 //! everything layered on top of it: expression parsing, transcendentals, unit
 //! conversion, number bases, arbitrary precision, matrices and complex numbers.
 
+pub mod expr;
 pub mod fixed;
 pub mod kernel;
