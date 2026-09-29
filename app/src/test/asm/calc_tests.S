@@ -3,6 +3,8 @@
 .equ STDOUT, 1
 
 .equ NUMBUF_SIZE, 32
+.equ STATE_SIZE, 40
+.equ OUT_SIZE, 64
 
 .section .bss
 .balign 8
@@ -13,9 +15,9 @@ failed_cases:
 numbuf:
     .space NUMBUF_SIZE
 test_state:
-    .space 40
+    .space STATE_SIZE
 test_out:
-    .space 64
+    .space OUT_SIZE
 
 .section .rodata
 sf_a:
@@ -48,19 +50,6 @@ sf_all_passed:
     .asciz "all tests passed\n"
 
 .section .text
-.global mark
-.type mark, %function
-mark:
-    sub sp, sp, #16
-    strb w0, [sp]
-    mov x0, #1
-    mov x1, sp
-    mov x2, #1
-    mov x8, #64
-    svc #0
-    add sp, sp, #16
-    ret
-
 .global print
 .type print, %function
 print:
@@ -74,14 +63,15 @@ print:
 .global print_cstr
 .type print_cstr, %function
 print_cstr:
-    mov x1, x0
+    mov x9, x0
 pc_len:
     ldrb w2, [x0]
     cbz w2, pc_len_done
     add x0, x0, #1
     b pc_len
 pc_len_done:
-    mov x0, x1
+    sub x1, x0, x9
+    mov x0, x9
     b print
 
 .global cstr_len
@@ -108,7 +98,7 @@ print_u64:
 pu_loop:
     udiv x5, x0, x3
     msub x6, x5, x3, x0
-    add x6, x6, #48
+    add w6, w6, #48
     sub x4, x4, #1
     strb w6, [x4]
     mov x0, x5
@@ -140,12 +130,13 @@ ce_cmp:
     b.ne ce_false
     add x0, x0, #1
     b ce_cmp
-ce_tail_equal:
-    ldrb w5, [x3, x0]
-    cbnz w5, ce_false
 ce_true:
     mov x0, #1
     ret
+ce_tail_equal:
+    ldrb w5, [x3, x0]
+    cbnz w5, ce_false
+    b ce_true
 ce_false:
     mov x0, #0
     ret
@@ -292,8 +283,6 @@ summary_ok:
 framework_selftest:
     stp x29, x30, [sp, #-48]!
     mov x29, sp
-    mov w0, #'a'
-    bl mark
     adrp x0, sf_a
     add x0, x0, :lo12:sf_a
     adrp x1, sf_a
@@ -330,8 +319,6 @@ framework_selftest:
     adrp x0, sf_harness_ok
     add x0, x0, :lo12:sf_harness_ok
     bl report_pass
-    mov w0, #'b'
-    bl mark
     ldp x29, x30, [sp], #48
     ret
 fs_fail:
@@ -345,98 +332,151 @@ fs_fail:
     ldp x29, x30, [sp], #48
     ret
 
-.global run_case
-.type run_case, %function
-run_case:
-    stp x29, x30, [sp, #-64]!
-    mov x29, sp
-    stp x19, x20, [sp, #16]
-    stp x21, x22, [sp, #32]
-    stp x23, x24, [sp, #48]
-    mov x19, x0
-    mov x20, x1
-    mov x21, x2
-    mov x22, x3
-    mov w0, #'r'
-    bl mark
-    adrp x23, test_state
-    add x23, x23, :lo12:test_state
-    mov x0, x23
-    bl calc_reset
-    mov x24, xzr
-rc_key_loop:
-    cmp x24, x21
-    b.ge rc_keys_done
-    ldrb w1, [x20, x24]
-    mov x0, x23
-    bl calc_key
-    add x24, x24, #1
-    b rc_key_loop
-rc_keys_done:
-    mov w0, #'k'
-    bl mark
-    mov x0, x23
-    adrp x1, test_out
-    add x1, x1, :lo12:test_out
-    bl calc_format
-    mov w0, #'f'
-    bl mark
-    mov x0, x19
-    adrp x1, test_out
-    add x1, x1, :lo12:test_out
-    mov x2, x22
-    bl check
-    mov w0, #'c'
-    bl mark
-    ldp x23, x24, [sp, #48]
-    ldp x21, x22, [sp, #32]
-    ldp x19, x20, [sp, #16]
-    ldp x29, x30, [sp], #64
-    ret
+.global test_reset_state
+.type test_reset_state, %function
+test_reset_state:
+    adrp x0, test_state
+    add x0, x0, :lo12:test_state
+    b calc_reset
 
-.global calc_test_main
-.type calc_test_main, %function
-calc_test_main:
+.global keys
+.type keys, %function
+keys:
     stp x29, x30, [sp, #-48]!
     mov x29, sp
     stp x19, x20, [sp, #16]
     stp x21, x22, [sp, #32]
-    bl framework_selftest
-    adrp x0, test_table
-    add x0, x0, :lo12:test_table
-    ldr x1, [x0, #16]
-    cbz x1, table_done
-table_next:
-    ldr x19, [x0]
-    ldr x20, [x0, #8]
-    ldr x21, [x0, #16]
-    ldr x22, [x0, #24]
-    mov w0, #'t'
-    bl mark
-    bl run_case
-    add x0, x0, #32
-    ldr x1, [x0, #16]
-    cbnz x1, table_next
-table_done:
-    mov w0, #'T'
-    bl mark
-    bl print_summary
-    adrp x0, failed_cases
-    add x0, x0, :lo12:failed_cases
-    ldr x0, [x0]
-    mov w0, #'D'
-    bl mark
+    mov x19, x0
+keys_loop:
+    ldrb w0, [x19]
+    cbz w0, keys_done
+    sub w20, w0, #48
+    cmp w20, #9
+    b.hi keys_special
+    mov x21, x20
+    b keys_press
+keys_special:
+    cmp w0, #46
+    b.eq keys_dot
+    cmp w0, #61
+    b.eq keys_equals
+    cmp w0, #43
+    b.eq keys_add
+    cmp w0, #45
+    b.eq keys_sub
+    cmp w0, #42
+    b.eq keys_mul
+    cmp w0, #47
+    b.eq keys_div
+    cmp w0, #99
+    b.eq keys_clear
+    cmp w0, #126
+    b.eq keys_sign
+    mov x21, xzr
+    b keys_press
+keys_dot:
+    mov x21, #10
+    b keys_press
+keys_equals:
+    mov x21, #11
+    b keys_press
+keys_add:
+    mov x21, #12
+    b keys_press
+keys_sub:
+    mov x21, #13
+    b keys_press
+keys_mul:
+    mov x21, #14
+    b keys_press
+keys_div:
+    mov x21, #15
+    b keys_press
+keys_clear:
+    mov x21, #16
+    b keys_press
+keys_sign:
+    mov x21, #17
+    b keys_press
+keys_press:
+    adrp x0, test_state
+    add x0, x0, :lo12:test_state
+    mov w1, w21
+    bl calc_key
+    add x19, x19, #1
+    b keys_loop
+keys_done:
     ldp x21, x22, [sp, #32]
     ldp x19, x20, [sp, #16]
     ldp x29, x30, [sp], #48
     ret
 
+.global expect
+.type expect, %function
+expect:
+    stp x29, x30, [sp, #-48]!
+    mov x29, sp
+    stp x19, x20, [sp, #16]
+    mov x19, x0
+    mov x20, x1
+    adrp x0, test_state
+    add x0, x0, :lo12:test_state
+    adrp x1, test_out
+    add x1, x1, :lo12:test_out
+    bl calc_format
+    mov x0, x19
+    adrp x1, test_out
+    add x1, x1, :lo12:test_out
+    mov x2, x20
+    bl check
+    ldp x19, x20, [sp, #16]
+    ldp x29, x30, [sp], #48
+    ret
+
+.global run_case
+.type run_case, %function
+run_case:
+    stp x29, x30, [sp, #-32]!
+    mov x29, sp
+    stp x19, x20, [sp, #16]
+    mov x19, x0
+    bl test_reset_state
+    ldr x0, [x19, #8]
+    bl keys
+    ldr x0, [x19]
+    ldr x1, [x19, #16]
+    bl expect
+    ldp x19, x20, [sp, #16]
+    ldp x29, x30, [sp], #32
+    ret
+
+.global calc_test_main
+.type calc_test_main, %function
+calc_test_main:
+    stp x29, x30, [sp, #-32]!
+    mov x29, sp
+    stp x19, x20, [sp, #16]
+    bl framework_selftest
+    adrp x0, test_table
+    add x0, x0, :lo12:test_table
+    mov x19, x0
+table_next:
+    ldr x0, [x19]
+    cbz x0, table_done
+    mov x0, x19
+    bl run_case
+    add x19, x19, #24
+    b table_next
+table_done:
+    bl print_summary
+    adrp x0, failed_cases
+    add x0, x0, :lo12:failed_cases
+    ldr x0, [x0]
+    ldp x19, x20, [sp, #16]
+    ldp x29, x30, [sp], #32
+    ret
+
 .section .rodata
-.balign 8
-keys_reset:
-    .byte 16
-keys_clear_after_digits:
-    .byte 1, 2, 3, 16
 .balign 8
 t_reset:
     .asciz "reset shows zero"
@@ -444,25 +484,23 @@ t_clear:
     .asciz "clear returns to zero"
 t_clear_after_digits:
     .asciz "clear after digits returns to zero"
+k_reset:
+    .asciz "c"
+k_clear_after_digits:
+    .asciz "123c"
+s_zero:
+    .asciz "0"
 .balign 8
 test_table:
     .quad t_reset
-    .quad keys_reset
-    .quad 1
+    .quad k_reset
     .quad s_zero
     .quad t_clear
-    .quad keys_reset
-    .quad 1
+    .quad k_reset
     .quad s_zero
     .quad t_clear_after_digits
-    .quad keys_clear_after_digits
-    .quad 4
+    .quad k_clear_after_digits
     .quad s_zero
     .quad 0
     .quad 0
     .quad 0
-    .quad 0
-
-.section .rodata
-s_zero:
-    .asciz "0"

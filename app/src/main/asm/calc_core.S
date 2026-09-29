@@ -52,6 +52,7 @@ dec_count_done:
     sub x0, x0, #1
     mov x4, x1
     mov x6, #10
+    mov x12, x3
 dec_fill:
     udiv x7, x4, x6
     msub x5, x7, x6, x4
@@ -62,6 +63,7 @@ dec_fill:
     subs x3, x3, #1
     b.ne dec_fill
     add x0, x0, #1
+    add x0, x0, x12
     sub x1, x0, x9
     ret
 
@@ -130,8 +132,9 @@ fmt_terminate:
     sub x0, x20, x26
     b fmt_done
 fmt_error:
-    adrp x0, str_error
-    add x0, x0, :lo12:str_error
+    mov x0, x20
+    adrp x1, str_error
+    add x1, x1, :lo12:str_error
     bl cstr_copy
     mov x0, #5
 fmt_done:

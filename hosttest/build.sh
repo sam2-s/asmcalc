@@ -59,7 +59,8 @@ for source in "${sources[@]}"; do
     objects+=("$object")
 done
 
-"$LD" -static -T "$ROOT/hosttest/link.ld" -o "$OUT/calc_tests.elf" "${objects[@]}"
+"$LD" -static -e _start -Ttext=0x400000 -Tdata=0x410000 \
+    -o "$OUT/calc_tests.elf" "${objects[@]}"
 "$TOOLCHAIN/bin/llvm-strip" "$OUT/calc_tests.elf"
 
 if [[ "${SKIP_RUN:-0}" == "1" ]]; then
