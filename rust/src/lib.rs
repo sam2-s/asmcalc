@@ -18,6 +18,11 @@ pub mod jni;
 // assembly never reaches the .so. Forcing the dependency here makes the kernel
 // part of the crate graph, which both fixes the ordering and documents the
 // relationship: the Rust feature layer sits on top of the assembly kernel.
+//
+// Only AArch64 builds have the archive, and only those are the real thing: on
+// the host `kernel_engine` supplies a Rust transcription instead, and the
+// kernel parity tests are the ones that check the two agree.
+#[cfg(target_arch = "aarch64")]
 #[link(name = "asmcalc_kernel", kind = "static")]
 extern "C" {}
 pub mod kernel;
