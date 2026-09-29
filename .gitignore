@@ -10,3 +10,4 @@ captures/
 .idea/
 .DS_Store
 *.log
+rust/target/

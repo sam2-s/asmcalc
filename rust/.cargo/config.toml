@@ -1,0 +1,12 @@
+# musl is the AArch64 target used to run the FFI parity tests on this host: it
+# links statically, so qemu can execute the result without /system/bin/linker64.
+[target.aarch64-unknown-linux-musl]
+linker = "/home/nga/asmcalc/rust/.cargo/aarch64-musl-linker.sh"
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-linux-android]
+linker = "/home/nga/Android/Sdk/ndk/27.1.12297006/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang"
+
+[env]
+ANDROID_NDK_HOME = "/home/nga/Android/Sdk/ndk/27.1.12297006"
+ANDROID_SDK_ROOT = "/home/nga/Android/Sdk"
