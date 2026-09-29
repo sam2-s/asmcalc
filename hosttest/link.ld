@@ -13,11 +13,13 @@ SECTIONS
     *(.rodata .rodata.*)
   }
 
+  . = ALIGN(0x1000);
+
   .data : {
     *(.data .data.*)
   }
 
-  .bss : {
+  .bss (NOLOAD) : ALIGN(4) {
     *(.bss .bss.*)
     *(COMMON)
   }
