@@ -26,8 +26,9 @@ android {
                     "-DANDROID_STL=none",
                     // The machine wide ~/.cargo/config.toml forces -static,
                     // which is right for a binary and wrong for a cdylib, so
-                    // the project supplies its own rustflags.
-                    "-DASM_CALC_RUSTFLAGS=-C link-arg=-fuse-ld=lld",
+                    // the project overrides it. rust/.cargo/android-linker.sh
+                    // supplies the NDK driver and picks lld.
+                    "-DASM_CALC_RUSTFLAGS= ",
                 )
             }
         }
