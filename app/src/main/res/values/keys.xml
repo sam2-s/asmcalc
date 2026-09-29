@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AsmCalcKey">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_margin">5dp</item>
+        <item name="android:background">@drawable/key_background</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">26sp</item>
+    </style>
+
+    <style name="AsmCalcKey.Equals">
+        <item name="android:background">@drawable/key_equals_background</item>
+        <item name="android:textColor">#FFFFB300</item>
+    </style>
+
+    <style name="AsmCalcKey.Wide">
+        <item name="android:layout_weight">2</item>
+    </style>
+</resources>
