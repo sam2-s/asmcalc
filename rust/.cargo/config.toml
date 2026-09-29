@@ -1,11 +1,12 @@
-# Linker drivers live next to this file as scripts, referenced relative to the
-# repository root. Cargo resolves a relative `linker` against the *workspace*
-# root, not the crate, so these are written as `rust/.cargo/<script>` and the
-# repository is expected to be checked out as `<root>/rust`.
+# Linker drivers live next to this file and are referenced relative to the
+# crate directory, which is where cargo resolves a relative `linker` path from.
+#
+# Both scripts find the NDK through $ANDROID_NDK_HOME, so nothing here is tied
+# to a particular machine.
 
 [target.aarch64-linux-android]
-linker = "rust/.cargo/android-linker.sh"
+linker = ".cargo/android-linker.sh"
 
 [target.aarch64-unknown-linux-musl]
-linker = "rust/.cargo/aarch64-musl-linker.sh"
+linker = ".cargo/aarch64-musl-linker.sh"
 rustflags = ["-C", "target-feature=+crt-static"]
