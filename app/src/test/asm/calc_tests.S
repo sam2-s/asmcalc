@@ -440,6 +440,8 @@ run_case:
     mov x29, sp
     stp x19, x20, [sp, #16]
     mov x19, x0
+    ldr x0, [x19]
+    bl print_cstr
     bl test_reset_state
     ldr x0, [x19, #8]
     bl keys
@@ -480,27 +482,246 @@ table_done:
 .balign 8
 t_reset:
     .asciz "reset shows zero"
+t_digit:
+    .asciz "a single digit is typed"
+t_digits:
+    .asciz "several digits are typed"
+t_cap:
+    .asciz "entry stops at twelve integer digits"
+t_dot_start:
+    .asciz "a leading dot starts a fresh entry"
+t_dot_half:
+    .asciz "a half is entered as a fraction"
+t_dot_twice:
+    .asciz "a second dot is ignored"
+t_dot_shift:
+    .asciz "a fifth fractional digit shifts the window"
 t_clear:
     .asciz "clear returns to zero"
 t_clear_after_digits:
     .asciz "clear after digits returns to zero"
+t_mul:
+    .asciz "twelve times twelve is a hundred and forty four"
+t_decimal_sum:
+    .asciz "a tenth plus a fifth is exactly three tenths"
+t_sub_negative:
+    .asciz "five minus eight is negative three"
+t_sub_positive:
+    .asciz "eight minus five is three"
+t_neg_add:
+    .asciz "negative eight plus five is negative three"
+t_sign_toggle:
+    .asciz "the sign key negates the typed value"
+t_sign_zero:
+    .asciz "negating zero stays zero"
+t_chain:
+    .asciz "operators chain with immediate execution"
+t_chain_mid:
+    .asciz "a pending operator shows the accumulated value"
+t_repeat_equals:
+    .asciz "a repeated equals repeats the last operation"
+t_div_thirds:
+    .asciz "one third rounds to four decimals"
+t_div_two_thirds:
+    .asciz "two thirds rounds up"
+t_div_chain:
+    .asciz "division chains left to right"
+t_div_by_zero:
+    .asciz "dividing by zero latches an error"
+t_error_clears:
+    .asciz "clear leaves the error state"
+t_error_ignores:
+    .asciz "digits are ignored while an error is latched"
+t_overflow:
+    .asciz "a product past the magnitude limit latches an error"
+t_big_sum:
+    .asciz "large magnitudes still add exactly"
 k_reset:
+    .asciz "c"
+k_digit:
+    .asciz "7"
+k_digits:
+    .asciz "1234"
+k_cap:
+    .asciz "1234567890123"
+k_dot_start:
+    .asciz ".5"
+k_dot_half:
+    .asciz "0.5"
+k_dot_twice:
+    .asciz "0.5.5"
+k_dot_shift:
+    .asciz "0.12345"
+k_clear:
     .asciz "c"
 k_clear_after_digits:
     .asciz "123c"
+k_mul:
+    .asciz "12*12="
+k_decimal_sum:
+    .asciz "0.1+0.2="
+k_sub_negative:
+    .asciz "5-8="
+k_sub_positive:
+    .asciz "8-5="
+k_neg_add:
+    .asciz "8~+5="
+k_sign_toggle:
+    .asciz "5~"
+k_sign_zero:
+    .asciz "0~"
+k_chain:
+    .asciz "2+3*4="
+k_chain_mid:
+    .asciz "2+3*"
+k_repeat_equals:
+    .asciz "2+3=="
+k_div_thirds:
+    .asciz "1/3="
+k_div_two_thirds:
+    .asciz "2/3="
+k_div_chain:
+    .asciz "100/5/2="
+k_div_by_zero:
+    .asciz "1/0="
+k_error_clears:
+    .asciz "1/0=c"
+k_error_ignores:
+    .asciz "1/0=5"
+k_overflow:
+    .asciz "999999999999*999999999999="
+k_big_sum:
+    .asciz "99999999999+1="
 s_zero:
     .asciz "0"
+s_seven:
+    .asciz "7"
+s_1234:
+    .asciz "1234"
+s_cap:
+    .asciz "123456789012"
+s_dot_five:
+    .asciz "0.5"
+s_leading_dot:
+    .asciz "0.5"
+s_dot_five_five:
+    .asciz "0.55"
+s_shift:
+    .asciz "0.1235"
+s_144:
+    .asciz "144"
+s_three_tenths:
+    .asciz "0.3"
+s_neg_three:
+    .asciz "-3"
+s_neg_five:
+    .asciz "-5"
+s_pos_three:
+    .asciz "3"
+s_20:
+    .asciz "20"
+s_five:
+    .asciz "5"
+s_8:
+    .asciz "8"
+s_one_third:
+    .asciz "0.3333"
+s_two_thirds:
+    .asciz "0.6667"
+s_10:
+    .asciz "10"
+s_error:
+    .asciz "Error"
+s_5:
+    .asciz "5"
+s_100000000000:
+    .asciz "100000000000"
 .balign 8
 test_table:
     .quad t_reset
     .quad k_reset
     .quad s_zero
+    .quad t_digit
+    .quad k_digit
+    .quad s_seven
+    .quad t_digits
+    .quad k_digits
+    .quad s_1234
+    .quad t_cap
+    .quad k_cap
+    .quad s_cap
+    .quad t_dot_start
+    .quad k_dot_start
+    .quad s_leading_dot
+    .quad t_dot_half
+    .quad k_dot_half
+    .quad s_dot_five
+    .quad t_dot_twice
+    .quad k_dot_twice
+    .quad s_dot_five_five
+    .quad t_dot_shift
+    .quad k_dot_shift
+    .quad s_shift
     .quad t_clear
-    .quad k_reset
+    .quad k_clear
     .quad s_zero
     .quad t_clear_after_digits
     .quad k_clear_after_digits
     .quad s_zero
+    .quad t_mul
+    .quad k_mul
+    .quad s_144
+    .quad t_decimal_sum
+    .quad k_decimal_sum
+    .quad s_three_tenths
+    .quad t_sub_negative
+    .quad k_sub_negative
+    .quad s_neg_three
+    .quad t_sub_positive
+    .quad k_sub_positive
+    .quad s_pos_three
+    .quad t_neg_add
+    .quad k_neg_add
+    .quad s_neg_three
+    .quad t_sign_toggle
+    .quad k_sign_toggle
+    .quad s_neg_five
+    .quad t_sign_zero
+    .quad k_sign_zero
+    .quad s_zero
+    .quad t_chain_mid
+    .quad k_chain_mid
+    .quad s_five
+    .quad t_chain
+    .quad k_chain
+    .quad s_20
+    .quad t_repeat_equals
+    .quad k_repeat_equals
+    .quad s_8
+    .quad t_div_thirds
+    .quad k_div_thirds
+    .quad s_one_third
+    .quad t_div_two_thirds
+    .quad k_div_two_thirds
+    .quad s_two_thirds
+    .quad t_div_chain
+    .quad k_div_chain
+    .quad s_10
+    .quad t_div_by_zero
+    .quad k_div_by_zero
+    .quad s_error
+    .quad t_error_clears
+    .quad k_error_clears
+    .quad s_zero
+    .quad t_error_ignores
+    .quad k_error_ignores
+    .quad s_error
+    .quad t_overflow
+    .quad k_overflow
+    .quad s_error
+    .quad t_big_sum
+    .quad k_big_sum
+    .quad s_100000000000
     .quad 0
     .quad 0
     .quad 0
