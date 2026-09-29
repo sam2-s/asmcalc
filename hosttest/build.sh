@@ -62,6 +62,11 @@ done
 "$LD" -static -T "$ROOT/hosttest/link.ld" -o "$OUT/calc_tests.elf" "${objects[@]}"
 "$TOOLCHAIN/bin/llvm-strip" "$OUT/calc_tests.elf"
 
+if [[ "${SKIP_RUN:-0}" == "1" ]]; then
+    echo "linked: $OUT/calc_tests.elf"
+    exit 0
+fi
+
 if ! command -v "$QEMU" >/dev/null 2>&1; then
     echo "error: $QEMU not found; the test binary is AArch64 and the host is x86_64" >&2
     echo "       arch: sudo pacman -S qemu-user-static   (or set QEMU_AARCH64)" >&2
