@@ -1,8 +1,11 @@
-# musl is the AArch64 target used to run the FFI parity tests on this host: it
-# links statically, so qemu can execute the result without /system/bin/linker64.
-[target.aarch64-unknown-linux-musl]
-linker = "/home/nga/asmcalc/rust/.cargo/aarch64-musl-linker.sh"
-rustflags = ["-C", "target-feature=+crt-static"]
+# Linker drivers live next to this file as scripts, referenced relative to the
+# repository root. Cargo resolves a relative `linker` against the *workspace*
+# root, not the crate, so these are written as `rust/.cargo/<script>` and the
+# repository is expected to be checked out as `<root>/rust`.
 
 [target.aarch64-linux-android]
-linker = "/home/nga/asmcalc/rust/.cargo/android-linker.sh"
+linker = "rust/.cargo/android-linker.sh"
+
+[target.aarch64-unknown-linux-musl]
+linker = "rust/.cargo/aarch64-musl-linker.sh"
+rustflags = ["-C", "target-feature=+crt-static"]

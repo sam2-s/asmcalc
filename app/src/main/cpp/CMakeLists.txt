@@ -53,7 +53,6 @@ add_custom_command(
         RUSTFLAGS=${ASM_CALC_RUSTFLAGS}
         ANDROID_NDK_HOME=${ANDROID_NDK_HOME}
         cargo build
-            --offline
             --manifest-path ${ASM_CALC_RUST_DIR}/Cargo.toml
             --target ${ASM_CALC_RUST_TARGET}
             --release
