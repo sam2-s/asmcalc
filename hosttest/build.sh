@@ -7,7 +7,16 @@ TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
 CC="$TOOLCHAIN/bin/aarch64-linux-android21-clang"
 LD="$TOOLCHAIN/bin/ld.lld"
 OUT="$ROOT/build/hosttest"
-QEMU="${QEMU_AARCH64:-qemu-aarch64}"
+
+if [[ -n "${QEMU_AARCH64:-}" ]]; then
+    QEMU="$QEMU_AARCH64"
+elif command -v qemu-aarch64 >/dev/null 2>&1; then
+    QEMU=qemu-aarch64
+elif command -v qemu-aarch64-static >/dev/null 2>&1; then
+    QEMU=qemu-aarch64-static
+else
+    QEMU=qemu-aarch64
+fi
 
 if [[ ! -x "$CC" || ! -x "$LD" ]]; then
     echo "error: NDK toolchain not found at $TOOLCHAIN" >&2
