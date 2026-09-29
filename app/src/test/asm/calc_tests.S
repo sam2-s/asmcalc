@@ -12,6 +12,10 @@ failed_cases:
     .quad 0
 numbuf:
     .space NUMBUF_SIZE
+test_state:
+    .space 40
+test_out:
+    .space 64
 
 .section .rodata
 sf_a:
@@ -324,15 +328,112 @@ fs_fail:
     ldp x29, x30, [sp], #48
     ret
 
+.global run_case
+.type run_case, %function
+run_case:
+    stp x29, x30, [sp, #-64]!
+    mov x29, sp
+    stp x19, x20, [sp, #16]
+    stp x21, x22, [sp, #32]
+    stp x23, x24, [sp, #48]
+    mov x19, x0
+    mov x20, x1
+    mov x21, x2
+    mov x22, x3
+    adrp x0, test_state
+    add x0, x0, :lo12:test_state
+    bl calc_reset
+    mov x0, xzr
+rc_key_loop:
+    cmp x0, x21
+    b.ge rc_keys_done
+    ldrb w1, [x20, x0]
+    adrp x2, test_state
+    add x2, x2, :lo12:test_state
+    mov x0, x2
+    bl calc_key
+    add x0, x0, #1
+    b rc_key_loop
+rc_keys_done:
+    adrp x0, test_state
+    add x0, x0, :lo12:test_state
+    adrp x1, test_out
+    add x1, x1, :lo12:test_out
+    bl calc_format
+    mov x0, x19
+    adrp x1, test_out
+    add x1, x1, :lo12:test_out
+    mov x2, x22
+    bl check
+    ldp x23, x24, [sp, #48]
+    ldp x21, x22, [sp, #32]
+    ldp x19, x20, [sp, #16]
+    ldp x29, x30, [sp], #64
+    ret
+
 .global calc_test_main
 .type calc_test_main, %function
 calc_test_main:
     stp x29, x30, [sp, #-48]!
     mov x29, sp
+    stp x19, x20, [sp, #16]
+    stp x21, x22, [sp, #32]
     bl framework_selftest
+    adrp x0, test_table
+    add x0, x0, :lo12:test_table
+    ldr x1, [x0, #16]
+    cbz x1, table_done
+table_next:
+    ldr x19, [x0]
+    ldr x20, [x0, #8]
+    ldr x21, [x0, #16]
+    ldr x22, [x0, #24]
+    bl run_case
+    add x0, x0, #32
+    ldr x1, [x0, #16]
+    cbnz x1, table_next
+table_done:
     bl print_summary
     adrp x0, failed_cases
     add x0, x0, :lo12:failed_cases
     ldr x0, [x0]
+    ldp x21, x22, [sp, #32]
+    ldp x19, x20, [sp, #16]
     ldp x29, x30, [sp], #48
     ret
+
+.section .rodata
+.balign 8
+keys_reset:
+    .byte 16
+keys_clear_after_digits:
+    .byte 1, 2, 3, 16
+.balign 8
+t_reset:
+    .asciz "reset shows zero"
+t_clear:
+    .asciz "clear returns to zero"
+t_clear_after_digits:
+    .asciz "clear after digits returns to zero"
+.balign 8
+test_table:
+    .quad t_reset
+    .quad keys_reset
+    .quad 1
+    .quad s_zero
+    .quad t_clear
+    .quad keys_reset
+    .quad 1
+    .quad s_zero
+    .quad t_clear_after_digits
+    .quad keys_clear_after_digits
+    .quad 4
+    .quad s_zero
+    .quad 0
+    .quad 0
+    .quad 0
+    .quad 0
+
+.section .rodata
+s_zero:
+    .asciz "0"
