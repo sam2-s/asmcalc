@@ -30,6 +30,8 @@ elif command -v qemu-aarch64 >/dev/null 2>&1; then
     QEMU=qemu-aarch64
 elif command -v qemu-aarch64-static >/dev/null 2>&1; then
     QEMU=qemu-aarch64-static
+elif [[ -x "$HOME/.local/opt/qemu/usr/bin/qemu-aarch64-static" ]]; then
+    QEMU="$HOME/.local/opt/qemu/usr/bin/qemu-aarch64-static"
 else
     QEMU=qemu-aarch64
 fi
