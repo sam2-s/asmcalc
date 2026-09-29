@@ -256,6 +256,36 @@ impl Exact {
         Exact::from_u64(1)
     }
 
+    /// Remainder, following the sign of the dividend, like the `%` on a
+    /// calculator pad rather than Rust's `%` on integers.
+    pub fn rem(&self, other: &Exact) -> Option<Exact> {
+        if other.is_zero() {
+            return None;
+        }
+        let magnitude = &self.magnitude % &other.magnitude;
+        let value = Exact {
+            negative: self.negative,
+            magnitude,
+        };
+        Some(if value.is_zero() { Exact::zero() } else { value })
+    }
+
+    /// The value as an `i64`, when it is a whole number that fits.
+    pub fn to_i64(&self) -> Option<i64> {
+        if self.frac_digits_nonzero() {
+            return None;
+        }
+        let as_integer = &self.magnitude / BigUint::from(Exact::SCALE_POW);
+        let value = as_integer.to_i64()?;
+        Some(if self.is_negative() { -value } else { value })
+    }
+
+    /// True when any digit below the scale is set.
+    fn frac_digits_nonzero(&self) -> bool {
+        let divisor = BigUint::from(Exact::SCALE_POW);
+        (&self.magnitude % &divisor) != BigUint::zero()
+    }
+
     /// The value as an `f64`, which may lose precision for large mantissas.
     pub fn to_f64(&self) -> f64 {
         let as_float = |v: &BigUint| -> f64 {
@@ -305,6 +335,23 @@ impl Exact {
             format!("{sign}{integer}")
         } else {
             format!("{sign}{integer}.{fraction}")
+        }
+    }
+}
+
+impl PartialOrd for Exact {
+    fn partial_cmp(&self, other: &Exact) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Exact {
+    fn cmp(&self, other: &Exact) -> std::cmp::Ordering {
+        match (self.is_negative(), other.is_negative()) {
+            (false, true) => std::cmp::Ordering::Greater,
+            (true, false) => std::cmp::Ordering::Less,
+            (false, false) => self.magnitude.cmp(&other.magnitude),
+            (true, true) => other.magnitude.cmp(&self.magnitude),
         }
     }
 }

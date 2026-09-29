@@ -1,11 +1,17 @@
 //! Parity tests: every case the assembly suite checks, replayed through the
 //! Rust FFI wrapper.
 //!
-//! These are the same 29 cases as `app/src/test/asm/calc_tests.S`, expressed
-//! against `FixedEngine`. Running them proves the FFI layer talks to the kernel
-//! correctly; the assembly harness proves the kernel itself is correct.
+//! These are the same cases as `app/src/test/asm/calc_tests.S`, expressed
+//! against the assembly engine. Running them proves the FFI layer talks to the
+//! kernel correctly; the assembly harness proves the kernel itself is correct.
+//!
+//! The whole file is AArch64 only: these tests exist to exercise the real
+//! assembly, and there is nothing to check against on the host. `./rusttest.sh`
+//! cross compiles and runs them under qemu.
 
-use asmcalc::fixed::FixedEngine;
+#![cfg(target_arch = "aarch64")]
+
+use asmcalc::kernel_engine::{AsmEngine, KeyEngine};
 
 struct Case {
     keys: &'static str,
@@ -49,8 +55,10 @@ fn ffi_reproduces_every_assembly_case() {
     let mut failures = Vec::new();
 
     for case in CASES {
-        let mut engine = FixedEngine::new();
-        engine.press_str(case.keys);
+        let mut engine = AsmEngine::new();
+        for ch in case.keys.chars() {
+            engine.press(asmcalc::fixed::keycode_for(ch).expect("known key"));
+        }
         let actual = engine.display();
         if actual != case.expected {
             failures.push(format!(
@@ -107,8 +115,10 @@ fn state_layout_matches_the_assembly_offsets() {
 
 #[test]
 fn dividing_by_zero_latches_an_error() {
-    let mut engine = FixedEngine::new();
-    engine.press_str("1/0=");
+    let mut engine = AsmEngine::new();
+    for ch in "1/0=".chars() {
+        engine.press(asmcalc::fixed::keycode_for(ch).expect("known key"));
+    }
     assert!(engine.is_error());
     assert_eq!(engine.display(), "Error");
 }

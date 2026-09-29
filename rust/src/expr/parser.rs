@@ -24,7 +24,7 @@ pub struct Function {
     pub arity: usize,
 }
 
-use MathError::{Domain, Undefined};
+use MathError::{Domain, Overflow, Undefined};
 
 /// Look up a function by name.
 pub fn lookup(name: &str) -> Option<Function> {
@@ -189,10 +189,19 @@ impl Parser {
                 value *= right;
             } else if self.eat(&Token::Slash) {
                 let right = self.unary()?;
+                // In floating point, dividing by zero yields infinity rather
+                // than trapping, so it has to be caught here or `1/0` would
+                // quietly display `inf` instead of an error.
+                if right == 0.0 {
+                    return Err(MathError::DivisionByZero);
+                }
                 value = value / right;
             } else if self.eat(&Token::Percent) {
                 // `x % y` is the remainder, matching the pocket calculator pad.
                 let right = self.unary()?;
+                if right == 0.0 {
+                    return Err(MathError::DivisionByZero);
+                }
                 value %= right;
             } else {
                 return Ok(value);
@@ -407,8 +416,6 @@ impl Parser {
         Ok(value)
     }
 }
-
-use MathError::Overflow;
 
 /// Render a float for a calculator display: no trailing zeros, no `1.0`.
 pub fn format_number(value: Number) -> String {
