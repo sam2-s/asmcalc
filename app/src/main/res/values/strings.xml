@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AsmCalc</string>
+    <string name="tab_calculator">Calc</string>
+    <string name="tab_scientific">Sci</string>
+    <string name="tab_programmer">Prog</string>
+    <string name="tab_convert">Conv</string>
+    <string name="angle_degrees">DEG</string>
+    <string name="angle_radians">RAD</string>
+    <string name="angle_gradians">GRAD</string>
 </resources>

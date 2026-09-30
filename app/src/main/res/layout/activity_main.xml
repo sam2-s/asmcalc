@@ -3,152 +3,127 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/black"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/display"
+    <LinearLayout
+        android:id="@+id/tab_bar"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="bottom|end"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="12dp"
-        android:text="0"
-        android:textColor="@android:color/white"
-        android:textSize="52sp" />
+        android:layout_height="42dp"
+        android:orientation="horizontal"
+        android:paddingStart="6dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="6dp">
+
+        <Button
+            android:id="@+id/tab_calculator"
+            style="@style/AsmCalcTab"
+            android:text="@string/tab_calculator" />
+
+        <Button
+            android:id="@+id/tab_scientific"
+            style="@style/AsmCalcTab"
+            android:text="@string/tab_scientific" />
+
+        <Button
+            android:id="@+id/tab_programmer"
+            style="@style/AsmCalcTab"
+            android:text="@string/tab_programmer" />
+
+        <Button
+            android:id="@+id/tab_convert"
+            style="@style/AsmCalcTab"
+            android:text="@string/tab_convert" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="5"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="12dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/key_clear"
-                style="@style/AsmCalcKey"
-                android:text="C" />
+            <TextView
+                android:id="@+id/status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#FF8A8A8A"
+                android:textSize="12sp" />
 
-            <Button
-                android:id="@+id/key_sign"
-                style="@style/AsmCalcKey"
-                android:text="+/−" />
-
-            <Button
-                android:id="@+id/key_divide"
-                style="@style/AsmCalcKey"
-                android:text="÷" />
-
-            <Button
-                android:id="@+id/key_multiply"
-                style="@style/AsmCalcKey"
-                android:text="×" />
+            <TextView
+                android:id="@+id/angle_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/key_function_background"
+                android:paddingStart="10dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="3dp"
+                android:textColor="#FF9FD4FF"
+                android:textSize="12sp" />
         </LinearLayout>
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/expression"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:ellipsize="start"
+            android:gravity="end"
+            android:maxLines="1"
+            android:textColor="#FF9E9E9E"
+            android:textSize="18sp" />
 
-            <Button
-                android:id="@+id/key_7"
-                style="@style/AsmCalcKey"
-                android:text="7" />
-
-            <Button
-                android:id="@+id/key_8"
-                style="@style/AsmCalcKey"
-                android:text="8" />
-
-            <Button
-                android:id="@+id/key_9"
-                style="@style/AsmCalcKey"
-                android:text="9" />
-
-            <Button
-                android:id="@+id/key_minus"
-                style="@style/AsmCalcKey"
-                android:text="−" />
-        </LinearLayout>
-
-        <LinearLayout
+        <TextView
+            android:id="@+id/display"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/key_4"
-                style="@style/AsmCalcKey"
-                android:text="4" />
-
-            <Button
-                android:id="@+id/key_5"
-                style="@style/AsmCalcKey"
-                android:text="5" />
-
-            <Button
-                android:id="@+id/key_6"
-                style="@style/AsmCalcKey"
-                android:text="6" />
-
-            <Button
-                android:id="@+id/key_plus"
-                style="@style/AsmCalcKey"
-                android:text="+" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/key_1"
-                style="@style/AsmCalcKey"
-                android:text="1" />
-
-            <Button
-                android:id="@+id/key_2"
-                style="@style/AsmCalcKey"
-                android:text="2" />
-
-            <Button
-                android:id="@+id/key_3"
-                style="@style/AsmCalcKey"
-                android:text="3" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/key_0"
-                style="@style/AsmCalcKey.Wide"
-                android:text="0" />
-
-            <Button
-                android:id="@+id/key_dot"
-                style="@style/AsmCalcKey"
-                android:text="." />
-
-            <Button
-                android:id="@+id/key_equals"
-                style="@style/AsmCalcKey.Equals"
-                android:text="=" />
-        </LinearLayout>
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:maxLines="1"
+            android:text="0"
+            android:textColor="@android:color/white"
+            android:textSize="48sp" />
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:id="@+id/pad_calculator"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="6"
+        android:orientation="vertical" />
+
+    <LinearLayout
+        android:id="@+id/pad_scientific"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="6"
+        android:orientation="vertical"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/pad_programmer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="6"
+        android:orientation="vertical"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/pad_convert"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="6"
+        android:orientation="vertical"
+        android:visibility="gone" />
 
 </LinearLayout>

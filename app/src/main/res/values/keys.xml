@@ -4,11 +4,23 @@
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:layout_weight">1</item>
-        <item name="android:layout_margin">5dp</item>
+        <item name="android:layout_margin">4dp</item>
         <item name="android:background">@drawable/key_background</item>
         <item name="android:stateListAnimator">@null</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="android:textSize">26sp</item>
+        <item name="android:textSize">24sp</item>
+    </style>
+
+    <style name="AsmCalcKey.Function">
+        <item name="android:background">@drawable/key_function_background</item>
+        <item name="android:textColor">#FF9FD4FF</item>
+        <item name="android:textSize">17sp</item>
+    </style>
+
+    <style name="AsmCalcKey.Memory">
+        <item name="android:background">@drawable/key_memory_background</item>
+        <item name="android:textColor">#FFFFD08A</item>
+        <item name="android:textSize">16sp</item>
     </style>
 
     <style name="AsmCalcKey.Equals">
@@ -18,5 +30,15 @@
 
     <style name="AsmCalcKey.Wide">
         <item name="android:layout_weight">2</item>
+    </style>
+
+    <style name="AsmCalcTab">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/tab_background</item>
+        <item name="android:textColor">@color/tab_text</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:stateListAnimator">@null</item>
     </style>
 </resources>
