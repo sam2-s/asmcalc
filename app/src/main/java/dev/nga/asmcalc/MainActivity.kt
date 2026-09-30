@@ -106,8 +106,16 @@ class MainActivity : Activity() {
 
     private fun refresh() {
         display.text = CalcNative.nativeDisplay(handle)
-        expression.text = CalcNative.nativeExpression(handle)
-        angleLabel.text = CalcNative.nativeAngleMode(handle)
+        expression.text = if (mode == Mode.PROGRAMMER) {
+            CalcNative.nativeProgrammerBases(handle).replace("\\n", "   ")
+        } else {
+            CalcNative.nativeExpression(handle)
+        }
+        angleLabel.text = when (mode) {
+            Mode.PROGRAMMER -> ""
+            Mode.CONVERT -> ""
+            else -> CalcNative.nativeAngleMode(handle)
+        }
     }
 
     // --- keypad construction ----------------------------------------------
@@ -156,8 +164,29 @@ class MainActivity : Activity() {
         button.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
         val margin = (5 * resources.displayMetrics.density).toInt()
         button.setPadding(margin, 0, margin, 0)
-        button.setOnClickListener { press(keycode) }
+        button.setOnClickListener { onKey(label, keycode) }
         return button
+    }
+
+    /**
+     * Route a key to whichever engine owns the current tab.
+     *
+     * Programmer mode has its own digit rules: the assembly kernel knows nothing
+     * about number bases, so those keys go to the Rust programmer engine, which
+     * rejects a digit the base cannot represent.
+     */
+    private fun onKey(label: String, keycode: Int) {
+        when {
+            mode == Mode.PROGRAMMER && keycode in 0..15 -> {
+                when (keycode) {
+                    -1 -> CalcNative.nativeProgrammerBackspace(handle)
+                    -2 -> CalcNative.nativeProgrammerClear(handle)
+                    else -> CalcNative.nativeProgrammerPush(handle, label)
+                }
+                refresh()
+            }
+            else -> press(keycode)
+        }
     }
 
     private fun backgroundFor(style: Int): Int = when (style) {
@@ -279,35 +308,95 @@ class MainActivity : Activity() {
     }
 
     private fun buildProgrammerPad(container: LinearLayout) {
+        container.removeAllViews()
+
+        // Base and word selectors, because a programmer calculator is mostly
+        // about which base you are reading the number in.
+        val selectors = LinearLayout(this)
+        selectors.orientation = LinearLayout.HORIZONTAL
+        selectors.layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            0,
+            1f,
+        )
+        for ((label, base) in listOf(
+            "HEX" to CalcNative.Base.HEXADECIMAL,
+            "DEC" to CalcNative.Base.DECIMAL,
+            "OCT" to CalcNative.Base.OCTAL,
+            "BIN" to CalcNative.Base.BINARY,
+        )) {
+            val button = Button(this)
+            button.text = label
+            button.isAllCaps = true
+            button.textSize = 13f
+            button.setTextColor(0xFF9FD4FF.toInt())
+            button.setBackgroundResource(R.drawable.key_function_background)
+            button.layoutParams =
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+            button.setOnClickListener {
+                CalcNative.nativeSetBase(handle, base)
+                refresh()
+            }
+            selectors.addView(button)
+        }
+        container.addView(selectors)
+
+        // Bitwise row.
+        val bitwise = LinearLayout(this)
+        bitwise.orientation = LinearLayout.HORIZONTAL
+        bitwise.layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            0,
+            1f,
+        )
+        for ((label, operation) in listOf(
+            "AND" to CalcNative.Bitwise.AND,
+            "OR" to CalcNative.Bitwise.OR,
+            "XOR" to CalcNative.Bitwise.XOR,
+            "NOT" to CalcNative.Bitwise.NOT,
+            "<<" to CalcNative.Bitwise.SHIFT_LEFT,
+            ">>" to CalcNative.Bitwise.SHIFT_RIGHT,
+        )) {
+            val button = Button(this)
+            button.text = label
+            button.isAllCaps = true
+            button.textSize = 12f
+            button.setTextColor(0xFF9FD4FF.toInt())
+            button.setBackgroundResource(R.drawable.key_function_background)
+            button.layoutParams =
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+            button.setOnClickListener {
+                // A NOT is unary and applies straight away; the rest fold in
+                // whatever is on the display as the second operand.
+                if (operation == CalcNative.Bitwise.NOT) {
+                    CalcNative.nativeProgrammerApply(handle, operation)
+                } else {
+                    CalcNative.nativeProgrammerRepeat(handle, operation)
+                }
+                refresh()
+            }
+            bitwise.addView(button)
+        }
+        container.addView(bitwise)
+
+        // Hex digits and the numeric pad.
         val rows = mutableListOf<List<Pair<String, Int>>>()
         rows.add(
             listOf(
-                "A" to CalcNative.Key.DIGIT_0 + 10,
-                "B" to CalcNative.Key.DIGIT_0 + 11,
-                "C" to CalcNative.Key.DIGIT_0 + 12,
-                "D" to CalcNative.Key.DIGIT_0 + 13,
-            )
-        )
-        rows.add(
-            listOf(
-                "E" to CalcNative.Key.DIGIT_0 + 14,
-                "F" to CalcNative.Key.DIGIT_0 + 15,
-                "AND" to CalcNative.Key.ADD,
-                "OR" to CalcNative.Key.MULTIPLY,
-            )
-        )
-        rows.add(
-            listOf(
-                "XOR" to CalcNative.Key.SUBTRACT,
-                "NOT" to CalcNative.Key.SIGN,
-                "<<" to CalcNative.Key.DIVIDE,
-                ">>" to CalcNative.Key.DOT,
+                "A" to 10,
+                "B" to 11,
+                "C" to 12,
+                "D" to 13,
+                "E" to 14,
+                "F" to 15,
+                "DEL" to -1,
+                "C" to -2,
             )
         )
         val d = digits()
         rows.add(d.subList(0, 4))
-        rows.add(d.subList(4, 7) + ("0" to CalcNative.Key.DIGIT_0))
-        rows.add(d.subList(7, 10) + ("DEC" to CalcNative.Key.CLEAR))
+        rows.add(d.subList(4, 7) + ("7" to 7))
+        rows.add(d.subList(7, 10) + ("8" to 8))
         buildPad(container, rows)
     }
 
@@ -364,6 +453,19 @@ class MainActivity : Activity() {
             }
             container.addView(line)
         }
+        input.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val text = s?.toString().orEmpty()
+                if (text.isBlank()) {
+                    result.text = ""
+                } else {
+                    result.text = CalcNative.nativeConvert(handle, text)
+                }
+            }
+        })
+
         convertInput = input
         convertResult = result
     }

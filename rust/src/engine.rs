@@ -10,6 +10,8 @@
 use crate::expr::number::Exact;
 use crate::expr::parser::{self, AngleMode};
 use crate::kernel_engine::{DefaultEngine, KeyEngine};
+use crate::programmer::{Base, Bitwise, Programmer, WordSize};
+use crate::units as convert_units;
 
 /// Which calculator is active.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -63,6 +65,9 @@ pub struct Calculator {
     display: String,
     history: Vec<HistoryEntry>,
     registers: [Register; 4],
+    programmer: Programmer,
+    base: Base,
+    word: WordSize,
 }
 
 impl Default for Calculator {
@@ -81,6 +86,9 @@ impl Calculator {
             display: "0".to_string(),
             history: Vec::new(),
             registers: [Register::EMPTY; 4],
+            programmer: Programmer::new(),
+            base: Base::Decimal,
+            word: WordSize::Bits64,
         }
     }
 
@@ -91,6 +99,81 @@ impl Calculator {
     pub fn set_engine(&mut self, engine: Engine) {
         self.engine = engine;
         self.expression.clear();
+        if engine == Engine::Programmer {
+            self.programmer = Programmer::new();
+            self.programmer.base = self.base;
+            self.programmer.word = self.word;
+        }
+    }
+
+    // --- programmer mode ---------------------------------------------------
+
+    pub fn set_base(&mut self, base: Base) {
+        self.base = base;
+        self.programmer.base = base;
+    }
+
+    pub fn base(&self) -> Base {
+        self.base
+    }
+
+    pub fn set_word_size(&mut self, word: WordSize) {
+        self.word = word;
+        self.programmer.word = word;
+        self.programmer.value &= word.mask();
+    }
+
+    pub fn word_size(&self) -> WordSize {
+        self.word
+    }
+
+    pub fn programmer_display(&self) -> String {
+        self.programmer.display()
+    }
+
+    /// Every base at once, for the programmer readout.
+    pub fn programmer_bases(&self) -> Vec<(Base, String)> {
+        self.programmer.all_bases()
+    }
+
+    pub fn programmer_signed(&self) -> i64 {
+        self.programmer.signed()
+    }
+
+    pub fn programmer_push(&mut self, ch: char) -> bool {
+        let accepted = self.programmer.push_digit(ch);
+        if accepted {
+            self.display = self.programmer.display();
+        }
+        accepted
+    }
+
+    pub fn programmer_clear(&mut self) {
+        self.programmer.clear();
+        self.display = self.programmer.display();
+    }
+
+    pub fn programmer_backspace(&mut self) {
+        self.programmer.backspace();
+        self.display = self.programmer.display();
+    }
+
+    /// Apply a bitwise operation, taking the operand from the current display.
+    pub fn programmer_apply(&mut self, operation: Bitwise, operand: u64) {
+        self.programmer.apply(operation, operand);
+        self.display = self.programmer.display();
+    }
+
+    pub fn programmer_repeat(&mut self, operation: Bitwise) {
+        self.programmer.repeat(operation);
+        self.display = self.programmer.display();
+    }
+
+    // --- unit conversion ---------------------------------------------------
+
+    /// Run a conversion request such as `5 km to miles`.
+    pub fn convert(&mut self, text: &str) -> Result<(convert_units::Category, f64), String> {
+        convert_units::evaluate(text)
     }
 
     pub fn angles(&self) -> AngleMode {

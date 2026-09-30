@@ -9,11 +9,12 @@
 #![cfg(target_os = "android")]
 
 use jni::objects::JClass;
-use jni::sys::{jlong, jstring, JNI_FALSE, JNI_TRUE};
+use jni::sys::{jboolean, jlong, jstring, JNI_FALSE, JNI_TRUE};
 use jni::JNIEnv;
 
 use crate::engine::Calculator;
 use crate::expr::parser::AngleMode;
+use crate::programmer::{Base, Bitwise, WordSize};
 
 /// State behind one native handle.
 pub struct Session {
@@ -286,8 +287,168 @@ pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeMemory(
     })
 }
 
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeSetBase(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    base: jni::sys::jint,
+) {
+    session!(_env, handle, |session| {
+        session.calculator.set_base(Base::from_jni(base));
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeGetBase(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+) -> jni::sys::jint {
+    session!(_env, handle, |session| {
+        session.calculator.base().to_jni()
+    })
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeSetWordSize(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    word: jni::sys::jint,
+) {
+    session!(_env, handle, |session| {
+        session.calculator.set_word_size(WordSize::from_jni(word));
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeProgrammerPush(
+    mut _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    ch: jstring,
+) -> jboolean {
+    let text = match read_string(&mut _env, ch) {
+        Some(text) => text,
+        None => return JNI_FALSE,
+    };
+    let mut accepted = false;
+    session!(_env, handle, |session| {
+        if let Some(first) = text.chars().next() {
+            accepted = session.calculator.programmer_push(first);
+        }
+    });
+    u8::from(accepted)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeProgrammerClear(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+) {
+    session!(_env, handle, |session| {
+        session.calculator.programmer_clear();
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeProgrammerBackspace(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+) {
+    session!(_env, handle, |session| {
+        session.calculator.programmer_backspace();
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeProgrammerApply(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    operation: jni::sys::jint,
+) {
+    session!(_env, handle, |session| {
+        // The operand is whatever is on the display right now, which is how a
+        // programmer calculator behaves: type a value, press a bitwise key.
+        let operand: u64 = session
+            .calculator
+            .display()
+            .split_whitespace()
+            .collect::<String>()
+            .parse()
+            .unwrap_or(0);
+        session.calculator.programmer_apply(Bitwise::from_jni(operation), operand);
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeProgrammerRepeat(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    operation: jni::sys::jint,
+) {
+    session!(_env, handle, |session| {
+        session.calculator.programmer_repeat(Bitwise::from_jni(operation));
+    });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeProgrammerBases(
+    env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+) -> jstring {
+    let text = session!(&env, handle, |session| {
+        session
+            .calculator
+            .programmer_bases()
+            .iter()
+            .map(|(base, value)| format!("{} {}", base.short_name(), value))
+            .collect::<Vec<_>>()
+            .join("\n")
+    });
+    match env.new_string(text) {
+        Ok(value) => value.into_raw(),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_dev_nga_asmcalc_CalcNative_nativeConvert(
+    mut env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    text: jstring,
+) -> jstring {
+    let input = match read_string(&mut env, text) {
+        Some(text) => text,
+        None => return std::ptr::null_mut(),
+    };
+    let output = session!(&env, handle, |session| match session.calculator.convert(&input) {
+        Ok((category, value)) => format!(
+            "{}: {} {}",
+            category.name(),
+            crate::units::format_result(value),
+            input.rsplit(char::is_whitespace).next().unwrap_or("")
+        ),
+        Err(error) => error,
+    });
+    match env.new_string(output) {
+        Ok(value) => value.into_raw(),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
 // --- conversions ---------------------------------------------------------
 
+/// Read a Java string, returning `None` for a null or undecodable value.
+///
+/// Takes the environment by value in a nested scope so callers keep theirs.
 fn read_string(env: &mut JNIEnv, value: jstring) -> Option<String> {
     use jni::objects::JString;
     if value.is_null() {
