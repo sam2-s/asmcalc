@@ -42,6 +42,10 @@ endif()
 set(ASM_CALC_SO
     ${ASM_CALC_RUST_DIR}/target/${ASM_CALC_RUST_TARGET}/release/libasmcalc.so)
 
+# cargo reads the linker from the environment when RUSTFLAGS is set, because
+# setting RUSTFLAGS discards the [target.*] tables in cargo config files.
+set(ASM_CALC_LINKER "${ASM_CALC_RUST_DIR}/.cargo/android-linker.sh")
+
 file(GLOB ASM_CALC_STUB_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/stub/*.c)
 
 add_library(asmcalc SHARED ${ASM_CALC_STUB_SOURCES})
@@ -51,6 +55,7 @@ add_custom_command(
     TARGET asmcalc PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E env
         RUSTFLAGS=${ASM_CALC_RUSTFLAGS}
+        CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=${ASM_CALC_LINKER}
         ANDROID_NDK_HOME=${ANDROID_NDK_HOME}
         cargo build
             --manifest-path ${ASM_CALC_RUST_DIR}/Cargo.toml
