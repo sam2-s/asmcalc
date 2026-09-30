@@ -66,9 +66,20 @@ add_custom_command(
 )
 
 # Replace whatever CMake just stubbed out with the cargo artefact.
+#
+# This has to run unconditionally. A POST_BUILD command only fires when CMake
+# relinks, and the stub never changes, so the cargo output would silently stop
+# being copied after the first successful build and a stale library would ship.
 add_custom_command(
     TARGET asmcalc POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${ASM_CALC_SO} $<TARGET_FILE:asmcalc>
+    COMMAND ${CMAKE_COMMAND} -E touch $<TARGET_FILE:asmcalc>
     COMMENT "Installing the cargo built libasmcalc.so"
+    VERBATIM
+)
+add_custom_target(asmcalc_refresh ALL
+    COMMAND ${CMAKE_COMMAND} -E copy ${ASM_CALC_SO} $<TARGET_FILE:asmcalc>
+    DEPENDS asmcalc
+    COMMENT "Refreshing libasmcalc.so from the cargo build"
     VERBATIM
 )
