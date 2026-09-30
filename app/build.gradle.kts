@@ -24,12 +24,15 @@ android {
             cmake {
                 arguments += listOf(
                     "-DANDROID_STL=none",
-                    // The machine wide ~/.cargo/config.toml forces -static,
-                    // which is right for a binary and wrong for a cdylib.
-                    // RUSTFLAGS replaces every config file, so this has to be a
-                    // real value: an empty one is *set*, and cargo would then
-                    // ignore the project's own .cargo/config.toml.
-                    "-DASM_CALC_RUSTFLAGS=-C link-arg=-fuse-ld=lld",
+                    // RUSTFLAGS replaces every cargo config file, which is how
+                    // the machine wide ~/.cargo/config.toml is overridden: it
+                    // forces -static, right for a static executable and wrong
+                    // for a cdylib.
+                    //
+                    // A *real* value is required. An empty RUSTFLAGS is still
+                    // "set", and cargo would then ignore this project's own
+                    // .cargo/config.toml, losing the linker script.
+                    "-DASM_CALC_RUSTFLAGS=-C debuginfo=0",
                 )
             }
         }
