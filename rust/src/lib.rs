@@ -4,6 +4,7 @@
 //! everything layered on top of it: expression parsing, transcendentals, unit
 //! conversion, number bases, arbitrary precision, matrices and complex numbers.
 
+pub mod algebra;
 pub mod engine;
 pub mod expr;
 pub mod fixed;
@@ -27,3 +28,5 @@ pub mod jni;
 extern "C" {}
 pub mod kernel;
 pub mod kernel_engine;
+pub mod programmer;
+pub mod units;
